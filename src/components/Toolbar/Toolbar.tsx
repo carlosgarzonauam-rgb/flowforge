@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useFlowStore } from '../../store/useFlowStore';
 import { AIBuildModal } from '../AIBuildModal/AIBuildModal';
 import { RecorderClient } from '../../services/recorder';
@@ -12,6 +12,10 @@ export function Toolbar() {
   const [recordError, setRecordError] = useState<string | null>(null);
   const [eventCount, setEventCount] = useState(0);
   const clientRef = useRef<RecorderClient | null>(null);
+  const recordStateRef = useRef<RecordState>('idle');
+
+  // Keep ref in sync so callbacks always see the latest state (avoids stale closures)
+  useEffect(() => { recordStateRef.current = recordState; }, [recordState]);
 
   const clearFlow = useFlowStore((s) => s.clearFlow);
   const setFlow = useFlowStore((s) => s.setFlow);
@@ -23,8 +27,9 @@ export function Toolbar() {
 
     const client = new RecorderClient({
       onStateChange: (state) => {
-        if (state === 'disconnected' && recordState !== 'idle') {
-          setRecordState('idle');
+        if (state === 'disconnected' && recordStateRef.current !== 'idle') {
+          setRecordState('error');
+          setRecordError('Recorder disconnected. Make sure the recorder app is still running.');
         }
       },
       onEvent: (event) => {
@@ -56,6 +61,16 @@ export function Toolbar() {
   const stopRecording = useCallback(() => {
     setRecordState('analyzing');
     clientRef.current?.send('stop');
+    // Safety timeout — if no summary arrives in 60s, reset
+    setTimeout(() => {
+      setRecordState((s) => {
+        if (s === 'analyzing') {
+          setRecordError('Analysis timed out. Try recording a shorter session.');
+          return 'error';
+        }
+        return s;
+      });
+    }, 60000);
   }, []);
 
   const pauseRecording = useCallback(() => {
