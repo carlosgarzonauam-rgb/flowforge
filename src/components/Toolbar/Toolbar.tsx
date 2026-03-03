@@ -106,16 +106,27 @@ export function Toolbar() {
 
         <div className="flex-1" />
 
-        {/* Record controls */}
-        {recordState === 'idle' && (
-          <button
-            onClick={startRecording}
-            title="Record your screen and auto-generate a workflow with AI"
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 text-white text-sm
-              font-medium rounded-lg hover:bg-red-600 transition-colors"
+        {/* Record controls — WebSocket only works on localhost (not HTTPS/Lovable) */}
+        {window.location.protocol === 'https:' ? (
+          <span
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-green-600
+              bg-green-50 border border-green-200 rounded-lg"
+            title="Recording is triggered from the tray app on your Mac. Results appear here automatically."
           >
-            ● Record
-          </button>
+            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+            Recorder listening
+          </span>
+        ) : (
+          recordState === 'idle' && (
+            <button
+              onClick={startRecording}
+              title="Record your screen and auto-generate a workflow with AI"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 text-white text-sm
+                font-medium rounded-lg hover:bg-red-600 transition-colors"
+            >
+              ● Record
+            </button>
+          )
         )}
 
         {recordState === 'connecting' && (
