@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { toast } from 'sonner';
 import { useFlowStore } from '../../store/useFlowStore';
 import { AIBuildModal } from '../AIBuildModal/AIBuildModal';
 import { RecorderClient } from '../../services/recorder';
@@ -38,7 +39,10 @@ export function Toolbar() {
       onSummary: ({ nodes, edges, description }) => {
         setRecordState('idle');
         setFlow(nodes as FlowNode[], edges as FlowEdge[]);
-        console.log('Workflow from recording:', description);
+        toast.success('Workflow loaded!', {
+          description,
+          duration: 5000,
+        });
       },
       onError: (msg) => {
         setRecordState('error');
